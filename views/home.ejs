@@ -1,12 +1,426 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blockchain Voting System</title>
+    <!-- Include Ethers.js via a reliable CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.6.4/ethers.umd.min.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        document
+          .getElementById("connectButton")
+          .addEventListener("click", connectMetaMask);
+        document
+          .getElementById("voteButton")
+          .addEventListener("click", castVote);
 
-</head>
-<body>
-    <h1 style="text-align: center;">Welcome to Home Page</h1>
-</body>
+        async function connectMetaMask() {
+          if (typeof window.ethereum !== "undefined") {
+            try {
+              const provider = new ethers.BrowserProvider(window.ethereum);
+              await provider.send("eth_requestAccounts", []);
+              const signer = await provider.getSigner();
+              const account = await signer.getAddress();
+              console.log("Connected account:", account);
+
+              const accountElement = document.getElementById("account");
+              if (accountElement) {
+                accountElement.innerText = `Connected account: ${account}`;
+              }
+
+              // Show the voting section now that the account is connected
+              document.getElementById("votingSection").style.display = "block";
+
+              // Fetch and display votes count
+              await displayVotes();
+            } catch (error) {
+              console.error("Error connecting to MetaMask:", error);
+            }
+          } else {
+            console.error("MetaMask is not installed.");
+            alert(
+              "MetaMask is not installed. Please install MetaMask to use this feature."
+            );
+          }
+        }
+
+        async function castVote() {
+          const candidateSelect = document.getElementById("candidateSelect");
+          const candidateIndex = candidateSelect.selectedIndex; // Get the index of the selected option
+          const voteStatusElement = document.getElementById("voteStatus");
+
+          try {
+            const contractAddress =
+              "0x777736f96B60FA22A6B7b791E5c00dc14c0ac167"; // Replace with your deployed contract address
+            const abi = [
+              {
+                inputs: [],
+                stateMutability: "nonpayable",
+                type: "constructor",
+              },
+              {
+                inputs: [
+                  {
+                    internalType: "uint256",
+                    name: "",
+                    type: "uint256",
+                  },
+                ],
+                name: "candidates",
+                outputs: [
+                  {
+                    internalType: "string",
+                    name: "",
+                    type: "string",
+                  },
+                ],
+                stateMutability: "view",
+                type: "function",
+              },
+              {
+                inputs: [],
+                name: "getCandidates",
+                outputs: [
+                  {
+                    internalType: "string[]",
+                    name: "",
+                    type: "string[]",
+                  },
+                ],
+                stateMutability: "view",
+                type: "function",
+              },
+              {
+                inputs: [
+                  {
+                    internalType: "uint256",
+                    name: "candidateIndex",
+                    type: "uint256",
+                  },
+                ],
+                name: "getVotes",
+                outputs: [
+                  {
+                    internalType: "uint256",
+                    name: "",
+                    type: "uint256",
+                  },
+                ],
+                stateMutability: "view",
+                type: "function",
+              },
+              {
+                inputs: [
+                  {
+                    internalType: "address",
+                    name: "",
+                    type: "address",
+                  },
+                ],
+                name: "hasVoted",
+                outputs: [
+                  {
+                    internalType: "bool",
+                    name: "",
+                    type: "bool",
+                  },
+                ],
+                stateMutability: "view",
+                type: "function",
+              },
+              {
+                inputs: [
+                  {
+                    internalType: "uint256",
+                    name: "candidateIndex",
+                    type: "uint256",
+                  },
+                ],
+                name: "vote",
+                outputs: [],
+                stateMutability: "nonpayable",
+                type: "function",
+              },
+              {
+                inputs: [
+                  {
+                    internalType: "uint256",
+                    name: "",
+                    type: "uint256",
+                  },
+                ],
+                name: "votes",
+                outputs: [
+                  {
+                    internalType: "uint256",
+                    name: "",
+                    type: "uint256",
+                  },
+                ],
+                stateMutability: "view",
+                type: "function",
+              },
+            ]; // Replace with your contract ABI
+
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            const signer = await provider.getSigner();
+            const votingContract = new ethers.Contract(
+              contractAddress,
+              abi,
+              signer
+            );
+
+            // Call the vote function on the contract, passing the index
+            const tx = await votingContract.vote(candidateIndex);
+            await tx.wait(); // Wait for the transaction to be mined
+
+            voteStatusElement.innerText = `Successfully voted for ${candidateSelect.value}`;
+            console.log(`Successfully voted for ${candidateSelect.value}`);
+
+            // Update the votes display after voting
+            await displayVotes();
+          } catch (error) {
+            console.error("Error casting vote:", error);
+            voteStatusElement.innerText =
+              "Error casting vote. Please try again.";
+          }
+        }
+
+        async function displayVotes() {
+          const contractAddress = "0x777736f96B60FA22A6B7b791E5c00dc14c0ac167"; // Replace with your deployed contract address
+          const abi = [
+            {
+              inputs: [],
+              stateMutability: "nonpayable",
+              type: "constructor",
+            },
+            {
+              inputs: [
+                {
+                  internalType: "uint256",
+                  name: "",
+                  type: "uint256",
+                },
+              ],
+              name: "candidates",
+              outputs: [
+                {
+                  internalType: "string",
+                  name: "",
+                  type: "string",
+                },
+              ],
+              stateMutability: "view",
+              type: "function",
+            },
+            {
+              inputs: [],
+              name: "getCandidates",
+              outputs: [
+                {
+                  internalType: "string[]",
+                  name: "",
+                  type: "string[]",
+                },
+              ],
+              stateMutability: "view",
+              type: "function",
+            },
+            {
+              inputs: [
+                {
+                  internalType: "uint256",
+                  name: "candidateIndex",
+                  type: "uint256",
+                },
+              ],
+              name: "getVotes",
+              outputs: [
+                {
+                  internalType: "uint256",
+                  name: "",
+                  type: "uint256",
+                },
+              ],
+              stateMutability: "view",
+              type: "function",
+            },
+            {
+              inputs: [
+                {
+                  internalType: "address",
+                  name: "",
+                  type: "address",
+                },
+              ],
+              name: "hasVoted",
+              outputs: [
+                {
+                  internalType: "bool",
+                  name: "",
+                  type: "bool",
+                },
+              ],
+              stateMutability: "view",
+              type: "function",
+            },
+            {
+              inputs: [
+                {
+                  internalType: "uint256",
+                  name: "candidateIndex",
+                  type: "uint256",
+                },
+              ],
+              name: "vote",
+              outputs: [],
+              stateMutability: "nonpayable",
+              type: "function",
+            },
+            {
+              inputs: [
+                {
+                  internalType: "uint256",
+                  name: "",
+                  type: "uint256",
+                },
+              ],
+              name: "votes",
+              outputs: [
+                {
+                  internalType: "uint256",
+                  name: "",
+                  type: "uint256",
+                },
+              ],
+              stateMutability: "view",
+              type: "function",
+            },
+          ]; // Replace with your contract ABI
+
+          const provider = new ethers.BrowserProvider(window.ethereum);
+          const votingContract = new ethers.Contract(
+            contractAddress,
+            abi,
+            provider
+          );
+
+          const votesList = document.getElementById("votesList");
+          votesList.innerHTML = ""; // Clear the previous votes
+
+          // Get the number of candidates from the contract
+          const candidates = await votingContract.getCandidates();
+
+          for (let i = 0; i < candidates.length; i++) {
+            const votes = await votingContract.getVotes(i);
+            const listItem = document.createElement("li");
+            listItem.innerText = `${candidates[i]}: ${votes.toString()} votes`;
+            votesList.appendChild(listItem);
+          }
+        }
+      });
+    </script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f7f9fc;
+        color: #333;
+        text-align: center;
+      }
+
+      header {
+        background-color: #4caf50;
+        color: white;
+        padding: 20px 0;
+        font-size: 1.5em;
+        font-weight: bold;
+      }
+
+      main {
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      button {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 1em;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      button:hover {
+        background-color: #45a049;
+      }
+
+      select {
+        padding: 10px;
+        font-size: 1em;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin: 10px 0;
+        width: 100%;
+      }
+
+      p {
+        font-size: 1em;
+        margin: 10px 0;
+        color: #555;
+      }
+
+      #votingSection,
+      #votesDisplay {
+        margin-top: 20px;
+      }
+
+      ul {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      ul li {
+        background: #f1f1f1;
+        margin: 5px 0;
+        padding: 10px;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <header>Blockchain Voting System</header>
+    <main>
+      <button id="connectButton">Connect MetaMask</button>
+      <p id="account"></p>
+
+      <!-- Voting section -->
+      <div id="votingSection" style="display: none">
+        <h2>Cast Your Vote</h2>
+        <select id="candidateSelect">
+          <option value="0">Candidate 1</option>
+          <option value="1">Candidate 2</option>
+          <option value="2">Candidate 3</option>
+        </select>
+        <button id="voteButton">Vote</button>
+        <p id="voteStatus"></p>
+      </div>
+
+      <!-- Votes display section -->
+      <div id="votesDisplay">
+        <h2>Votes Count</h2>
+        <ul id="votesList"></ul>
+      </div>
+    </main>
+  </body>
 </html>

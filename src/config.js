@@ -1,24 +1,27 @@
-const mongoose = require('mongoose');
-const connect = mongoose.connect("mongodb://localhost:27017/Login-tut");
+const mongoose = require("mongoose");
+const connect = mongoose.connect(
+  "mongodb+srv://josephsamuel1236:CJwyrSH8lXdZtlw9@blockchainvotingdatabas.rf1jx.mongodb.net/?retryWrites=true&w=majority&appName=BlockchainVotingDatabase"
+);
 
 // Check database connected or not
-connect.then(() => {
+connect
+  .then(() => {
     console.log("Database Connected Successfully");
-})
-.catch(() => {
+  })
+  .catch(() => {
     console.log("Database cannot be Connected");
-})
+  });
 
 // Create Schema
 const Loginschema = new mongoose.Schema({
-    name: {
-        type:String,
-        required: true
-    },
-    password: {
-        type: String,
-        required: true
-    }
+  name: {
+    type: String,
+    required: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
 });
 
 // collection part
